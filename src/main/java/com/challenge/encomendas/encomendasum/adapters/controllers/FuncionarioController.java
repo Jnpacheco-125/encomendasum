@@ -1,5 +1,6 @@
 package com.challenge.encomendas.encomendasum.adapters.controllers;
 
+import com.challenge.encomendas.encomendasum.adapters.controllers.dto.funcionario.AtualizarFuncionarioDTO;
 import com.challenge.encomendas.encomendasum.adapters.controllers.dto.funcionario.CadastroFuncionarioDTO;
 import com.challenge.encomendas.encomendasum.adapters.controllers.dto.funcionario.FuncionarioResponseDTO;
 import com.challenge.encomendas.encomendasum.adapters.controllers.dto.login.LoginRequestDTO;
@@ -14,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -81,5 +83,30 @@ public class FuncionarioController {
                 ))
                 .collect(Collectors.toList());
         return ResponseEntity.ok(funcionariosResposta);
+    }
+
+    @SecurityRequirement(name = "Bearer Auth")
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/funcionarios/{id}")
+    public ResponseEntity<Void> deletarFuncionario(@PathVariable Long id) {
+        try {
+            funcionarioService.deletarFuncionario(id);
+            return ResponseEntity.noContent().build(); // Retorna 204 No Content em caso de sucesso
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).build(); // Retorna o status da exceção (ex: 404)
+        } catch (Exception e) {
+            // Lidar com outras exceções inesperadas (logar, retornar 500, etc.)
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @SecurityRequirement(name = "Bearer Auth")
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/funcionarios/{id}")
+    public ResponseEntity<FuncionarioResponseDTO> atualizarFuncionario(
+            @PathVariable Long id,
+            @Valid @RequestBody AtualizarFuncionarioDTO dto) {
+        Funcionario atualizado = funcionarioService.atualizar(id, dto);
+        return ResponseEntity.ok(FuncionarioMapper.toResponseDTO(atualizado));
     }
 }
