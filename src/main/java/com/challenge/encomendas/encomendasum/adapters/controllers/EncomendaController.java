@@ -12,10 +12,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 
 @Slf4j
@@ -39,6 +38,39 @@ public class EncomendaController {
         EncomendaResponseDTO response = EncomendaMapper.toResponseDTO(novaEncomenda);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @SecurityRequirement(name = "Bearer Auth")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('PORTEIRO')")
+    @GetMapping("/pendentes")
+    public ResponseEntity<List<EncomendaResponseDTO>> listarPendentes() {
+        List<Encomenda> encomendas = encomendaService.buscarEncomendasPendentes();
+        List<EncomendaResponseDTO> response = encomendas.stream()
+                .map(EncomendaMapper::toResponseDTO)
+                .toList();
+
+        return ResponseEntity.ok(response);
+    }
+
+    @SecurityRequirement(name = "Bearer Auth")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('PORTEIRO')")
+    @GetMapping("/{id}")
+    public ResponseEntity<EncomendaResponseDTO> buscarPorId(@PathVariable Long id) {
+        Encomenda encomenda = encomendaService.buscarPorId(id); // esse método deve lançar exceção se não encontrar
+        EncomendaResponseDTO responseDTO = EncomendaMapper.toResponseDTO(encomenda);
+        return ResponseEntity.ok(responseDTO);
+    }
+
+    @SecurityRequirement(name = "Bearer Auth")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('PORTEIRO') or hasRole('MORADOR')")
+    @GetMapping("/morador/{moradorId}")
+    public ResponseEntity<List<EncomendaResponseDTO>> buscarPorMorador(@PathVariable Long moradorId) {
+        List<Encomenda> encomendas = encomendaService.buscarEncomendasPorMorador(moradorId);
+        List<EncomendaResponseDTO> response = encomendas.stream()
+                .map(EncomendaMapper::toResponseDTO)
+                .toList();
+
+        return ResponseEntity.ok(response);
     }
 
 }

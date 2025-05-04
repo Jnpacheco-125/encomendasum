@@ -18,6 +18,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
+
 @Service
 public class EncomendaService {
     private final EncomendaGateway encomendaGateway;
@@ -88,6 +90,19 @@ public class EncomendaService {
         } else {
             System.err.println("Erro: Dados do morador inválidos!");
         }
+    }
+
+    public Encomenda buscarPorId(Long id) {
+        return encomendaGateway.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Encomenda não encontrada."));
+    }
+
+    public List<Encomenda> buscarEncomendasPendentes() {
+        return encomendaGateway.findAllByRetiradaFalse(); // Removendo .map(EncomendaMapper::toDomain)
+    }
+
+    public List<Encomenda> buscarEncomendasPorMorador(Long moradorId) {
+        return encomendaGateway.findByMoradorDestinatarioId(moradorId);
     }
 
 }
