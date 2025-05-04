@@ -15,6 +15,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @RestController
 @RequestMapping("/api/funcionarios")
 public class FuncionarioController {
@@ -63,5 +66,20 @@ public class FuncionarioController {
         Funcionario funcionario = funcionarioService.buscarPorEmail(email);
         FuncionarioResponseDTO responseDTO = FuncionarioMapper.toResponseDTO(funcionario);
         return ResponseEntity.ok(responseDTO);
+    }
+
+    @SecurityRequirement(name = "Bearer Auth")
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/funcionarios/todos")
+    public ResponseEntity<List<FuncionarioResponseDTO>> listarTodosFuncionarios() {
+        List<Funcionario> funcionarios = funcionarioService.buscarTodos();
+        List<FuncionarioResponseDTO> funcionariosResposta = funcionarios.stream()
+                .map(funcionario -> new FuncionarioResponseDTO(
+                        funcionario.getId(),
+                        funcionario.getNome(),
+                        funcionario.getEmail()
+                ))
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(funcionariosResposta);
     }
 }
