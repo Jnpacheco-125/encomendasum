@@ -8,13 +8,12 @@ import com.challenge.encomendas.encomendasum.domain.entities.Funcionario;
 import com.challenge.encomendas.encomendasum.infrastructure.persistence.mappers.FuncionarioMapper;
 import com.challenge.encomendas.encomendasum.usecase.FuncionarioService;
 import com.challenge.encomendas.encomendasum.usecase.auth.AuthService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/funcionarios")
@@ -46,5 +45,13 @@ public class FuncionarioController {
 
         FuncionarioResponseDTO response = FuncionarioMapper.toResponseDTO(novoFuncionario);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+    @SecurityRequirement(name = "Bearer Auth")
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/{id}")
+    public ResponseEntity<FuncionarioResponseDTO> buscarFuncionarioPorId(@PathVariable Long id) {
+        Funcionario funcionario = funcionarioService.buscarPorId(id);
+        FuncionarioResponseDTO responseDTO = FuncionarioMapper.toResponseDTO(funcionario);
+        return ResponseEntity.ok(responseDTO);
     }
 }
