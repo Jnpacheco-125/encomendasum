@@ -33,4 +33,9 @@ public class FuncionarioService {
         Optional<Funcionario> funcionario = funcionarioGateway.findById(id);
         return funcionario.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Funcionário não encontrado"));
     }
+
+    public Funcionario buscarPorEmail(String email) {
+        Optional<Funcionario> funcionario = funcionarioGateway.findByEmail(email);
+        return funcionario.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Funcionário não encontrado"));
+    }
 }

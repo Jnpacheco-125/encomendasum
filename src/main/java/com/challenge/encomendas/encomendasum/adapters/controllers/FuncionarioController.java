@@ -46,11 +46,21 @@ public class FuncionarioController {
         FuncionarioResponseDTO response = FuncionarioMapper.toResponseDTO(novoFuncionario);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
+
     @SecurityRequirement(name = "Bearer Auth")
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/{id}")
     public ResponseEntity<FuncionarioResponseDTO> buscarFuncionarioPorId(@PathVariable Long id) {
         Funcionario funcionario = funcionarioService.buscarPorId(id);
+        FuncionarioResponseDTO responseDTO = FuncionarioMapper.toResponseDTO(funcionario);
+        return ResponseEntity.ok(responseDTO);
+    }
+
+    @SecurityRequirement(name = "Bearer Auth")
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/buscar-por-email")
+    public ResponseEntity<FuncionarioResponseDTO> buscarFuncionarioPorEmail(@RequestParam String email) {
+        Funcionario funcionario = funcionarioService.buscarPorEmail(email);
         FuncionarioResponseDTO responseDTO = FuncionarioMapper.toResponseDTO(funcionario);
         return ResponseEntity.ok(responseDTO);
     }
