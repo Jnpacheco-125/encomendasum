@@ -8,6 +8,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -37,5 +38,9 @@ public class FuncionarioService {
     public Funcionario buscarPorEmail(String email) {
         Optional<Funcionario> funcionario = funcionarioGateway.findByEmail(email);
         return funcionario.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Funcionário não encontrado"));
+    }
+
+    public List<Funcionario> buscarTodos() {
+        return funcionarioGateway.findAll();
     }
 }
