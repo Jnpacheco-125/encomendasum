@@ -9,7 +9,15 @@ import com.challenge.encomendas.encomendasum.domain.entities.Morador;
 import com.challenge.encomendas.encomendasum.infrastructure.persistence.mappers.MoradorMapper;
 import com.challenge.encomendas.encomendasum.usecase.MoradorService;
 import com.challenge.encomendas.encomendasum.usecase.auth.AuthService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +29,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/moradores")
+@Tag(name = "Moradores", description = "Operações relacionadas ao gerenciamento de moradores")
 public class MoradorController {
     private final MoradorService moradorService;
     private final AuthService authService;
@@ -30,6 +39,13 @@ public class MoradorController {
         this.authService = authService;
     }
 
+    @Operation(summary = "Login de morador", description = "Autentica um morador e retorna um token JWT.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Login bem-sucedido",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = LoginResponseDTO.class))),
+            @ApiResponse(responseCode = "401", description = "Credenciais inválidas", content = @Content)
+    })
     @PostMapping("/login")
     public ResponseEntity<LoginResponseDTO> loginMorador(@Valid @RequestBody LoginRequestDTO request) {
         try {
@@ -44,6 +60,36 @@ public class MoradorController {
         }
     }
 
+    @Operation(
+            summary = "Cadastro de morador",
+            description = "Registra um novo morador no sistema.",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = {
+                                    @ExampleObject(
+                                            name = "Exemplo de cadastro de morador",
+                                            value = """
+                                {
+                                  "nome": "Clara Residente",
+                                  "email": "clara@residencial.com",
+                                  "senha": "minhasenha123",
+                                  "telefone": "11987654321",
+                                  "apartamento": "101",
+                                  "role": "ROLE_MORADOR"
+                                }
+                                """
+                                    )
+                            }
+                    )
+            )
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Morador cadastrado com sucesso",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = MoradorResponseDTO.class))),
+            @ApiResponse(responseCode = "400", description = "Dados inválidos ou morador já existente", content = @Content)
+    })
     @PostMapping("/cadastro")
     public ResponseEntity<MoradorResponseDTO> cadastrarMorador(@Valid @RequestBody CadastroMoradorDTO dto) {
         Morador novoMorador = moradorService.cadastrar(dto);
@@ -51,6 +97,16 @@ public class MoradorController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @Operation(
+            summary = "Buscar morador por ID",
+            description = "Retorna os detalhes de um morador específico com base no seu ID."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Morador encontrado",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = MoradorResponseDTO.class))),
+            @ApiResponse(responseCode = "404", description = "Morador não encontrado", content = @Content)
+    })
     @SecurityRequirement(name = "Bearer Auth")
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/{id}")
@@ -60,6 +116,16 @@ public class MoradorController {
         return ResponseEntity.ok(responseDTO);
     }
 
+    @Operation(
+            summary = "Buscar morador por e-mail",
+            description = "Retorna os detalhes de um morador com base no seu e-mail."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Morador encontrado",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = MoradorResponseDTO.class))),
+            @ApiResponse(responseCode = "404", description = "Morador não encontrado", content = @Content)
+    })
     @SecurityRequirement(name = "Bearer Auth")
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/buscar-por-email")
@@ -69,6 +135,16 @@ public class MoradorController {
         return ResponseEntity.ok(responseDTO);
     }
 
+    @Operation(
+            summary = "Buscar morador por telefone",
+            description = "Retorna os detalhes de um morador com base no seu telefone."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Morador encontrado",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = MoradorResponseDTO.class))),
+            @ApiResponse(responseCode = "404", description = "Morador não encontrado", content = @Content)
+    })
     @SecurityRequirement(name = "Bearer Auth")
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/buscar-por-telefone")
@@ -78,6 +154,16 @@ public class MoradorController {
         return ResponseEntity.ok(responseDTO);
     }
 
+    @Operation(
+            summary = "Buscar morador por apartamento",
+            description = "Retorna os detalhes de um morador com base no número do apartamento."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Morador encontrado",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = MoradorResponseDTO.class))),
+            @ApiResponse(responseCode = "404", description = "Morador não encontrado", content = @Content)
+    })
     @SecurityRequirement(name = "Bearer Auth")
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/buscar-por-apartamento")
@@ -87,6 +173,16 @@ public class MoradorController {
         return ResponseEntity.ok(responseDTO);
     }
 
+    @Operation(
+            summary = "Listar todos os moradores",
+            description = "Retorna uma lista com todos os moradores cadastrados no sistema."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Lista de moradores encontrada",
+                    content = @Content(mediaType = "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = MoradorResponseDTO.class)))),
+            @ApiResponse(responseCode = "204", description = "Nenhum morador encontrado", content = @Content)
+    })
     @SecurityRequirement(name = "Bearer Auth")
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
@@ -104,6 +200,17 @@ public class MoradorController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(
+            summary = "Atualizar morador",
+            description = "Atualiza os dados de um morador existente no sistema."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Morador atualizado com sucesso",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = MoradorResponseDTO.class))),
+            @ApiResponse(responseCode = "404", description = "Morador não encontrado", content = @Content),
+            @ApiResponse(responseCode = "400", description = "Dados inválidos", content = @Content)
+    })
     @SecurityRequirement(name = "Bearer Auth")
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
@@ -114,6 +221,11 @@ public class MoradorController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "Deletar morador por ID", description = "Deleta um morador do sistema com base no seu ID.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Morador deletado com sucesso"),
+            @ApiResponse(responseCode = "404", description = "Morador não encontrado")
+    })
     @SecurityRequirement(name = "Bearer Auth")
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/moradores/{id}")
