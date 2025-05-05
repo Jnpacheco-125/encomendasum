@@ -1,5 +1,6 @@
 package com.challenge.encomendas.encomendasum.adapters.controllers;
 
+import com.challenge.encomendas.encomendasum.adapters.controllers.dto.encomendas.AtualizarEncomendaDTO;
 import com.challenge.encomendas.encomendasum.adapters.controllers.dto.encomendas.EncomendaRequestDTO;
 import com.challenge.encomendas.encomendasum.adapters.controllers.dto.encomendas.EncomendaResponseDTO;
 import com.challenge.encomendas.encomendasum.domain.entities.Encomenda;
@@ -73,4 +74,25 @@ public class EncomendaController {
         return ResponseEntity.ok(response);
     }
 
+    @SecurityRequirement(name = "Bearer Auth")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('PORTEIRO')")
+    @PatchMapping("/{id}/retirada")
+    public ResponseEntity<EncomendaResponseDTO> confirmarRetirada(
+            @PathVariable Long id,
+            @RequestBody AtualizarEncomendaDTO dto) {
+        Encomenda encomendaAtualizada = encomendaService.confirmarRetirada(id, dto);
+        return ResponseEntity.ok(EncomendaMapper.toResponseDTO(encomendaAtualizada));
+    }
+
+    @SecurityRequirement(name = "Bearer Auth")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('PORTEIRO')")
+    @GetMapping("/retiradas")
+    public ResponseEntity<List<EncomendaResponseDTO>> listarRetiradas() {
+        List<Encomenda> encomendas = encomendaService.buscarEncomendasRetiradas();
+        List<EncomendaResponseDTO> response = encomendas.stream()
+                .map(EncomendaMapper::toResponseDTO)
+                .toList();
+
+        return ResponseEntity.ok(response);
+    }
 }
