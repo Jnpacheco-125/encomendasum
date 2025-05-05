@@ -6,27 +6,30 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
 
-public record AtualizarEncomendaDTO(String nomeDestinatario,
+@Schema(description = "Resposta da encomenda alterada")
+public record AtualizarEncomendaDTO(
+        @Schema(description = "Nome do destinatário da encomenda")
+        String nomeDestinatario,
 
+        @Schema(description = "Número do apartamento do destinatário")
+        String apartamento,
 
-                                    String apartamento,
+        @Schema(description = "Descrição da encomenda")
+        String descricao,
 
+        @Schema(description = "Data de recebimento da encomenda")
+        LocalDateTime dataRecebimento,
 
-                                    String descricao,
+        @Schema(description = "Indica se a encomenda foi retirada")
+        Boolean retirada,
 
+        @Schema(description = "Data de retirada da encomenda")
+        LocalDateTime dataRetirada,
 
-                                    LocalDateTime dataRecebimento,
+        @Schema(description = "Funcionário que recebeu a encomenda")
+        FuncionarioResponseDTO funcionarioRecebimento,
 
-
-                                    Boolean retirada,
-
-
-                                    LocalDateTime dataRetirada,
-
-
-                                    FuncionarioResponseDTO funcionarioRecebimento,
-
-
-                                    MoradorResponseDTO moradorDestinatario
+        @Schema(description = "Morador destinatário da encomenda")
+        MoradorResponseDTO moradorDestinatario
 ) {
 }

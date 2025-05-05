@@ -6,7 +6,14 @@ import com.challenge.encomendas.encomendasum.adapters.controllers.dto.encomendas
 import com.challenge.encomendas.encomendasum.domain.entities.Encomenda;
 import com.challenge.encomendas.encomendasum.infrastructure.persistence.mappers.EncomendaMapper;
 import com.challenge.encomendas.encomendasum.usecase.EncomendaService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +28,7 @@ import java.util.List;
 @Slf4j
 @RestController
 @RequestMapping("/encomendas")
+@Tag(name = "Encomendas", description = "Endpoints para gerenciamento de encomendas")
 public class EncomendaController {
     private final EncomendaService encomendaService;
 
@@ -29,6 +37,43 @@ public class EncomendaController {
         this.encomendaService = encomendaService;
     }
 
+    @Operation(
+            summary = "Cadastro de encomenda",
+            description = "Registra uma nova encomenda no sistema e envia uma notificação por e-mail ao morador.",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = {
+                                    @ExampleObject(
+                                            name = "Exemplo de cadastro de encomenda",
+                                            value = """
+                            {
+                              "nomeDestinatario": "Carlos Souza",
+                              "apartamento": "101",
+                              "descricao": "Caixa grande - Loja X",
+                              "dataRecebimento": "2025-04-27T20:00:00",
+                              "retirada": false,
+                              "funcionarioRecebimento": {
+                                "id": 1,
+                                "nome": "João Porteiro"
+                              },
+                              "moradorDestinatario": {
+                                "id": 10,
+                                "nome": "Carlos Souza"
+                              }
+                            }
+                            """
+                                    )
+                            }
+                    )
+            )
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Encomenda cadastrada com sucesso",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = EncomendaResponseDTO.class))),
+            @ApiResponse(responseCode = "400", description = "Dados inválidos ou erro no cadastro", content = @Content)
+    })
     @SecurityRequirement(name = "Bearer Auth")
     @PreAuthorize("hasRole('PORTEIRO') or hasRole('ADMIN')")
     @PostMapping("/encomendas")
@@ -41,6 +86,13 @@ public class EncomendaController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @Operation(summary = "Listar encomendas pendentes", description = "Retorna todas as encomendas que ainda não foram retiradas")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Lista de encomendas pendentes retornada com sucesso",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = EncomendaResponseDTO.class))),
+            @ApiResponse(responseCode = "403", description = "Acesso não autorizado", content = @Content)
+    })
     @SecurityRequirement(name = "Bearer Auth")
     @PreAuthorize("hasRole('ADMIN') or hasRole('PORTEIRO')")
     @GetMapping("/pendentes")
@@ -53,6 +105,14 @@ public class EncomendaController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "Buscar encomenda por ID", description = "Retorna os detalhes de uma encomenda com base no seu ID")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Encomenda encontrada com sucesso",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = EncomendaResponseDTO.class))),
+            @ApiResponse(responseCode = "404", description = "Encomenda não encontrada", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Acesso não autorizado", content = @Content)
+    })
     @SecurityRequirement(name = "Bearer Auth")
     @PreAuthorize("hasRole('ADMIN') or hasRole('PORTEIRO')")
     @GetMapping("/{id}")
@@ -62,6 +122,13 @@ public class EncomendaController {
         return ResponseEntity.ok(responseDTO);
     }
 
+    @Operation(summary = "Buscar encomendas por morador", description = "Retorna todas as encomendas associadas a um morador específico")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Encomendas encontradas com sucesso",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = EncomendaResponseDTO.class))),
+            @ApiResponse(responseCode = "403", description = "Acesso não autorizado", content = @Content)
+    })
     @SecurityRequirement(name = "Bearer Auth")
     @PreAuthorize("hasRole('ADMIN') or hasRole('PORTEIRO') or hasRole('MORADOR')")
     @GetMapping("/morador/{moradorId}")
@@ -74,6 +141,14 @@ public class EncomendaController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "Confirmar retirada de encomenda", description = "Atualiza uma encomenda para indicar que foi retirada")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Encomenda retirada com sucesso",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = EncomendaResponseDTO.class))),
+            @ApiResponse(responseCode = "404", description = "Encomenda não encontrada", content = @Content),
+            @ApiResponse(responseCode = "400", description = "Encomenda já foi retirada", content = @Content)
+    })
     @SecurityRequirement(name = "Bearer Auth")
     @PreAuthorize("hasRole('ADMIN') or hasRole('PORTEIRO')")
     @PatchMapping("/{id}/retirada")
@@ -84,6 +159,13 @@ public class EncomendaController {
         return ResponseEntity.ok(EncomendaMapper.toResponseDTO(encomendaAtualizada));
     }
 
+    @Operation(summary = "Listar encomendas retiradas", description = "Retorna todas as encomendas que já foram retiradas")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Lista de encomendas retiradas retornada com sucesso",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = EncomendaResponseDTO.class))),
+            @ApiResponse(responseCode = "403", description = "Acesso não autorizado", content = @Content)
+    })
     @SecurityRequirement(name = "Bearer Auth")
     @PreAuthorize("hasRole('ADMIN') or hasRole('PORTEIRO')")
     @GetMapping("/retiradas")
