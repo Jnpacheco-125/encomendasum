@@ -4,6 +4,8 @@ import com.challenge.encomendas.encomendasum.adapters.controllers.dto.funcionari
 import com.challenge.encomendas.encomendasum.adapters.controllers.dto.funcionario.CadastroFuncionarioDTO;
 import com.challenge.encomendas.encomendasum.adapters.gateways.FuncionarioGateway;
 import com.challenge.encomendas.encomendasum.domain.entities.Funcionario;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -41,8 +43,8 @@ public class FuncionarioService {
         return funcionario.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Funcionário não encontrado"));
     }
 
-    public List<Funcionario> buscarTodos() {
-        return funcionarioGateway.findAll();
+    public Page<Funcionario> buscarTodos(Pageable pageable) {
+        return funcionarioGateway.findAll(pageable);
     }
 
     public void deletarFuncionario(Long id) {

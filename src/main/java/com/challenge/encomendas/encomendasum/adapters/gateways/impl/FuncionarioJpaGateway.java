@@ -6,6 +6,8 @@ import com.challenge.encomendas.encomendasum.infrastructure.persistence.entities
 import com.challenge.encomendas.encomendasum.infrastructure.persistence.mappers.FuncionarioMapper;
 import com.challenge.encomendas.encomendasum.infrastructure.persistence.repositories.FuncionarioJpaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -40,12 +42,11 @@ public class FuncionarioJpaGateway implements FuncionarioGateway {
     }
 
     @Override
-    public List<Funcionario> findAll() { // Certifique-se que retorna List<Funcionario> e não tem parâmetros
-        return funcionarioJpaRepository.findAll()
-                .stream()
-                .map(FuncionarioMapper::toDomain)
-                .collect(Collectors.toList());
+    public Page<Funcionario> findAll(Pageable pageable) {
+        return funcionarioJpaRepository.findAll(pageable)
+                .map(FuncionarioMapper::toDomain);
     }
+
 
     @Override
     public void deleteById(Long id) {
