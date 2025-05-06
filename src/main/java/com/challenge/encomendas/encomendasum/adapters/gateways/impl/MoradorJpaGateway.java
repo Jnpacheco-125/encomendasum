@@ -6,6 +6,8 @@ import com.challenge.encomendas.encomendasum.infrastructure.persistence.entities
 import com.challenge.encomendas.encomendasum.infrastructure.persistence.mappers.MoradorMapper;
 import com.challenge.encomendas.encomendasum.infrastructure.persistence.repositories.MoradorJpaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -54,11 +56,9 @@ public class MoradorJpaGateway implements MoradorGateway {
     }
 
     @Override
-    public List<Morador> findAll() {
-        return moradorJpaRepository.findAll()
-                .stream()
-                .map(MoradorMapper::toDomain)
-                .collect(Collectors.toList());
+    public Page<Morador> findAll(Pageable pageable) {
+        return moradorJpaRepository.findAll(pageable)
+                .map(MoradorMapper::toDomain);
     }
 
     @Override

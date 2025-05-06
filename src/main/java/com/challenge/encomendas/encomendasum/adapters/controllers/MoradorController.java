@@ -19,6 +19,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -174,28 +177,34 @@ public class MoradorController {
     }
 
     @Operation(
-            summary = "Listar todos os moradores",
-            description = "Retorna uma lista com todos os moradores cadastrados no sistema."
+            summary = "Listar moradores com paginação",
+            description = "Retorna uma página de moradores cadastrados no sistema, permitindo controle sobre a paginação."
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Lista de moradores encontrada",
+            @ApiResponse(responseCode = "200", description = "Página de moradores encontrada com sucesso",
                     content = @Content(mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = MoradorResponseDTO.class)))),
-            @ApiResponse(responseCode = "204", description = "Nenhum morador encontrado", content = @Content)
+                            schema = @Schema(implementation = Page.class))),
+            @ApiResponse(responseCode = "204", description = "Nenhum morador encontrado", content = @Content),
+            @ApiResponse(responseCode = "400", description = "Parâmetros de paginação inválidos"),
+            @ApiResponse(responseCode = "401", description = "Usuário não autenticado"),
+            @ApiResponse(responseCode = "403", description = "Usuário sem permissão para acessar este recurso"),
+            @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
     })
     @SecurityRequirement(name = "Bearer Auth")
     @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping
-    public ResponseEntity<List<MoradorResponseDTO>> listarTodosMoradores() {
-        List<Morador> moradores = moradorService.buscarTodos();
+    @GetMapping("/moradores")
+    public ResponseEntity<Page<MoradorResponseDTO>> listarTodosMoradores(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Morador> moradores = moradorService.buscarTodos(pageable);
 
         if (moradores.isEmpty()) {
-            return ResponseEntity.noContent().build(); // 204 se não tiver moradores
+            return ResponseEntity.noContent().build(); // 204 se não houver moradores
         }
 
-        List<MoradorResponseDTO> response = moradores.stream()
-                .map(MoradorMapper::toResponseDTO)
-                .toList();
+        Page<MoradorResponseDTO> response = moradores.map(MoradorMapper::toResponseDTO);
 
         return ResponseEntity.ok(response);
     }

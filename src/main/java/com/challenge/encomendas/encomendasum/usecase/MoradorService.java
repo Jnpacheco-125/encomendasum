@@ -5,6 +5,8 @@ import com.challenge.encomendas.encomendasum.adapters.controllers.dto.moradores.
 import com.challenge.encomendas.encomendasum.adapters.gateways.MoradorGateway;
 import com.challenge.encomendas.encomendasum.domain.entities.Morador;
 import com.challenge.encomendas.encomendasum.domain.enums.Role;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -54,8 +56,8 @@ public class MoradorService {
         return morador.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Morador não encontrado"));
     }
 
-    public List<Morador> buscarTodos() {
-        return moradorGateway.findAll();
+    public Page<Morador> buscarTodos(Pageable pageable) {
+        return moradorGateway.findAll(pageable);
     }
 
     public void deletarMorador(Long id) {

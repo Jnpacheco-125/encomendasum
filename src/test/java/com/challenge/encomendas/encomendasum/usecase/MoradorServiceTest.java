@@ -12,6 +12,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -146,29 +150,36 @@ public class MoradorServiceTest {
         });
     }
     @Test
-    public void deveRetornarListaDeMoradores_QuandoExistiremMoradores() {
+    public void deveRetornarPaginaDeMoradores_QuandoExistiremMoradores() {
         List<Morador> listaMoradores = Arrays.asList(
                 new Morador(1L, "Carlos", "86999775533", "Apt 101", "carlos@email.com", "senha123", new HashSet<>()),
                 new Morador(2L, "Maria", "86999887766", "Apt 202", "maria@email.com", "senha123", new HashSet<>())
         );
 
-        Mockito.when(moradorGateway.findAll()).thenReturn(listaMoradores);
+        Pageable pageable = PageRequest.of(0, 10); // Página 0, 10 registros por página
+        Page<Morador> paginaMoradores = new PageImpl<>(listaMoradores, pageable, listaMoradores.size());
 
-        List<Morador> resultado = moradorService.buscarTodos();
+        Mockito.when(moradorGateway.findAll(pageable)).thenReturn(paginaMoradores);
+
+        Page<Morador> resultado = moradorService.buscarTodos(pageable);
 
         Assertions.assertFalse(resultado.isEmpty());
-        Assertions.assertEquals(2, resultado.size());
-        Assertions.assertEquals("Carlos", resultado.get(0).getNome());
-        Assertions.assertEquals("Maria", resultado.get(1).getNome());
+        Assertions.assertEquals(2, resultado.getTotalElements());
+        Assertions.assertEquals("Carlos", resultado.getContent().get(0).getNome());
+        Assertions.assertEquals("Maria", resultado.getContent().get(1).getNome());
     }
 
     @Test
-    public void deveRetornarListaVazia_QuandoNaoExistiremMoradores() {
-        Mockito.when(moradorGateway.findAll()).thenReturn(Collections.emptyList());
+    public void deveRetornarPaginaVazia_QuandoNaoExistiremMoradores() {
+        Pageable pageable = PageRequest.of(0, 10); // Definindo a primeira página com tamanho 10
+        Page<Morador> paginaVazia = new PageImpl<>(Collections.emptyList(), pageable, 0);
 
-        List<Morador> resultado = moradorService.buscarTodos();
+        Mockito.when(moradorGateway.findAll(pageable)).thenReturn(paginaVazia);
+
+        Page<Morador> resultado = moradorService.buscarTodos(pageable);
 
         Assertions.assertTrue(resultado.isEmpty());
+        Assertions.assertEquals(0, resultado.getTotalElements());
     }
 
     @Test
