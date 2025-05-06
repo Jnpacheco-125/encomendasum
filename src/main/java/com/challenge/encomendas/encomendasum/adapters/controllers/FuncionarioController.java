@@ -19,6 +19,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -139,26 +142,38 @@ public class FuncionarioController {
         return ResponseEntity.ok(responseDTO);
     }
 
-    @Operation(summary = "Listar todos os funcionários", description = "Retorna uma lista de todos os funcionários cadastrados.")
+    @Operation(summary = "Listar todos os funcionários paginados",
+            description = "Retorna uma página de funcionários cadastrados, com suporte a paginação.")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Lista de todos os funcionários retornada com sucesso",
+            @ApiResponse(responseCode = "200", description = "Página de funcionários retornada com sucesso",
                     content = @Content(mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = FuncionarioResponseDTO.class))))
+                            schema = @Schema(implementation = Page.class))),
+            @ApiResponse(responseCode = "400", description = "Parâmetros de paginação inválidos"),
+            @ApiResponse(responseCode = "401", description = "Usuário não autorizado"),
+            @ApiResponse(responseCode = "403", description = "Usuário sem permissão para acessar este recurso"),
+            @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
     })
     @SecurityRequirement(name = "Bearer Auth")
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/funcionarios/todos")
-    public ResponseEntity<List<FuncionarioResponseDTO>> listarTodosFuncionarios() {
-        List<Funcionario> funcionarios = funcionarioService.buscarTodos();
-        List<FuncionarioResponseDTO> funcionariosResposta = funcionarios.stream()
-                .map(funcionario -> new FuncionarioResponseDTO(
+    public ResponseEntity<Page<FuncionarioResponseDTO>> listarTodosFuncionarios(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Funcionario> funcionarios = funcionarioService.buscarTodos(pageable);
+
+        Page<FuncionarioResponseDTO> funcionariosResposta = funcionarios.map(funcionario ->
+                new FuncionarioResponseDTO(
                         funcionario.getId(),
                         funcionario.getNome(),
                         funcionario.getEmail()
-                ))
-                .collect(Collectors.toList());
+                )
+        );
+
         return ResponseEntity.ok(funcionariosResposta);
     }
+
 
     @Operation(summary = "Deletar funcionário por ID", description = "Deleta um funcionário do sistema com base no seu ID.")
     @ApiResponses(value = {

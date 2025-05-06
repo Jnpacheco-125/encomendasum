@@ -12,6 +12,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -148,30 +152,36 @@ public class FuncionarioServiceTest {
     }
 
     @Test
-    public void deveRetornarListaDeFuncionarios_QuandoExistiremFuncionarios() {
+    public void deveRetornarPaginaDeFuncionarios_QuandoExistiremFuncionarios() {
         List<Funcionario> listaFuncionarios = Arrays.asList(
                 new Funcionario(1L, "Carlos", "carlos@email.com", "senha123", new HashSet<>()),
                 new Funcionario(2L, "Maria", "maria@email.com", "senha123", new HashSet<>())
-
         );
 
-        Mockito.when(funcionarioGateway.findAll()).thenReturn(listaFuncionarios);
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Funcionario> paginaFuncionarios = new PageImpl<>(listaFuncionarios, pageable, listaFuncionarios.size());
 
-        List<Funcionario> resultado = funcionarioService.buscarTodos();
+        Mockito.when(funcionarioGateway.findAll(pageable)).thenReturn(paginaFuncionarios);
+
+        Page<Funcionario> resultado = funcionarioService.buscarTodos(pageable);
 
         Assertions.assertFalse(resultado.isEmpty());
-        Assertions.assertEquals(2, resultado.size());
-        Assertions.assertEquals("Carlos", resultado.get(0).getNome());
-        Assertions.assertEquals("Maria", resultado.get(1).getNome());
+        Assertions.assertEquals(2, resultado.getTotalElements());
+        Assertions.assertEquals("Carlos", resultado.getContent().get(0).getNome());
+        Assertions.assertEquals("Maria", resultado.getContent().get(1).getNome());
     }
 
     @Test
-    public void deveRetornarListaVazia_QuandoNaoExistiremFuncionarios() {
-        Mockito.when(funcionarioGateway.findAll()).thenReturn(Collections.emptyList());
+    public void deveRetornarPaginaVazia_QuandoNaoExistiremFuncionarios() {
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Funcionario> paginaVazia = new PageImpl<>(Collections.emptyList(), pageable, 0);
 
-        List<Funcionario> resultado = funcionarioService.buscarTodos();
+        Mockito.when(funcionarioGateway.findAll(pageable)).thenReturn(paginaVazia);
+
+        Page<Funcionario> resultado = funcionarioService.buscarTodos(pageable);
 
         Assertions.assertTrue(resultado.isEmpty());
+        Assertions.assertEquals(0, resultado.getTotalElements());
     }
 
 }
