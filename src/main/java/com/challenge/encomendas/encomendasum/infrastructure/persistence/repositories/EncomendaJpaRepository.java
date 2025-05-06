@@ -2,6 +2,8 @@ package com.challenge.encomendas.encomendasum.infrastructure.persistence.reposit
 
 import com.challenge.encomendas.encomendasum.infrastructure.persistence.entities.EncomendaEntity;
 import jakarta.transaction.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -32,7 +34,7 @@ public interface EncomendaJpaRepository extends JpaRepository<EncomendaEntity, L
             + "LEFT JOIN FETCH e.funcionarioRecebimento "
             + "LEFT JOIN FETCH e.moradorDestinatario "
             + "WHERE e.retirada = true")
-    List<EncomendaEntity> findByRetiradaTrue();
+    Page<EncomendaEntity> findByRetiradaTrue(Pageable pageable);
 
     // Buscar encomendas recebidas dentro de um intervalo de tempo
     @Query("SELECT e FROM EncomendaEntity e WHERE e.dataRecebimento BETWEEN :startDate AND :endDate")

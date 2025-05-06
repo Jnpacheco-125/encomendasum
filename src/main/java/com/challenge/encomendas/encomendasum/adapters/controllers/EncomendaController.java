@@ -17,6 +17,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -159,22 +162,33 @@ public class EncomendaController {
         return ResponseEntity.ok(EncomendaMapper.toResponseDTO(encomendaAtualizada));
     }
 
-    @Operation(summary = "Listar encomendas retiradas", description = "Retorna todas as encomendas que já foram retiradas")
+    @Operation(
+            summary = "Listar encomendas retiradas com paginação",
+            description = "Retorna uma página de encomendas que já foram retiradas, permitindo controle sobre paginação."
+    )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Lista de encomendas retiradas retornada com sucesso",
+            @ApiResponse(responseCode = "200", description = "Página de encomendas retiradas retornada com sucesso",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = EncomendaResponseDTO.class))),
-            @ApiResponse(responseCode = "403", description = "Acesso não autorizado", content = @Content)
+                            schema = @Schema(implementation = Page.class))),
+            @ApiResponse(responseCode = "204", description = "Nenhuma encomenda retirada encontrada", content = @Content),
+            @ApiResponse(responseCode = "400", description = "Parâmetros de paginação inválidos"),
+            @ApiResponse(responseCode = "401", description = "Usuário não autenticado"),
+            @ApiResponse(responseCode = "403", description = "Usuário sem permissão para acessar este recurso"),
+            @ApiResponse(responseCode = "500", description = "Erro interno no servidor")
     })
     @SecurityRequirement(name = "Bearer Auth")
     @PreAuthorize("hasRole('ADMIN') or hasRole('PORTEIRO')")
     @GetMapping("/retiradas")
-    public ResponseEntity<List<EncomendaResponseDTO>> listarRetiradas() {
-        List<Encomenda> encomendas = encomendaService.buscarEncomendasRetiradas();
-        List<EncomendaResponseDTO> response = encomendas.stream()
-                .map(EncomendaMapper::toResponseDTO)
-                .toList();
+    public ResponseEntity<Page<EncomendaResponseDTO>> listarRetiradas(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Encomenda> encomendas = encomendaService.buscarEncomendasRetiradas(pageable);
+
+        Page<EncomendaResponseDTO> response = encomendas.map(EncomendaMapper::toResponseDTO);
 
         return ResponseEntity.ok(response);
     }
+
 }
