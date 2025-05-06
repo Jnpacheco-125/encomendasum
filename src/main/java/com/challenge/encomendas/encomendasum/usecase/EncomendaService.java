@@ -11,6 +11,8 @@ import com.challenge.encomendas.encomendasum.domain.entities.Encomenda;
 import com.challenge.encomendas.encomendasum.domain.entities.Funcionario;
 import com.challenge.encomendas.encomendasum.domain.entities.Morador;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
@@ -159,8 +161,9 @@ public class EncomendaService {
         }
     }
 
-    public List<Encomenda> buscarEncomendasRetiradas() {
-        return encomendaGateway.findAllByRetiradaTrue();
+    public Page<Encomenda> buscarEncomendasRetiradas(Pageable pageable) {
+        return encomendaGateway.findAllByRetiradaTrue(pageable);
     }
+
 
 }

@@ -17,6 +17,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.web.server.ResponseStatusException;
@@ -163,29 +167,36 @@ public class EncomendaServiceTest {
         Assertions.assertTrue(resultado.isEmpty());
     }
     @Test
-    public void deveRetornarEncomendasRetiradas_QuandoExistirem() {
+    public void deveRetornarPaginaDeEncomendasRetiradas_QuandoExistirem() {
         List<Encomenda> encomendasRetiradas = Arrays.asList(
                 new Encomenda(3L, "Pedro Lima", "Apt 303", "Pacote pequeno", LocalDateTime.now(), true, LocalDateTime.now(), null, null),
                 new Encomenda(4L, "Ana Oliveira", "Apt 404", "Caixa média", LocalDateTime.now(), true, LocalDateTime.now(), null, null)
         );
 
-        Mockito.when(encomendaGateway.findAllByRetiradaTrue()).thenReturn(encomendasRetiradas);
+        Pageable pageable = PageRequest.of(0, 10); // Página 0, com 10 registros por página
+        Page<Encomenda> paginaEncomendas = new PageImpl<>(encomendasRetiradas, pageable, encomendasRetiradas.size());
 
-        List<Encomenda> resultado = encomendaService.buscarEncomendasRetiradas();
+        Mockito.when(encomendaGateway.findAllByRetiradaTrue(pageable)).thenReturn(paginaEncomendas);
+
+        Page<Encomenda> resultado = encomendaService.buscarEncomendasRetiradas(pageable);
 
         Assertions.assertFalse(resultado.isEmpty());
-        Assertions.assertEquals(2, resultado.size());
-        Assertions.assertTrue(resultado.get(0).getRetirada());
-        Assertions.assertTrue(resultado.get(1).getRetirada());
+        Assertions.assertEquals(2, resultado.getTotalElements());
+        Assertions.assertTrue(resultado.getContent().get(0).getRetirada());
+        Assertions.assertTrue(resultado.getContent().get(1).getRetirada());
     }
 
     @Test
-    public void deveRetornarListaVazia_QuandoNaoExistiremEncomendasRetiradas() {
-        Mockito.when(encomendaGateway.findAllByRetiradaTrue()).thenReturn(Collections.emptyList());
+    public void deveRetornarPaginaVazia_QuandoNaoExistiremEncomendasRetiradas() {
+        Pageable pageable = PageRequest.of(0, 10); // Definindo a primeira página com tamanho 10
+        Page<Encomenda> paginaVazia = new PageImpl<>(Collections.emptyList(), pageable, 0);
 
-        List<Encomenda> resultado = encomendaService.buscarEncomendasRetiradas();
+        Mockito.when(encomendaGateway.findAllByRetiradaTrue(pageable)).thenReturn(paginaVazia);
+
+        Page<Encomenda> resultado = encomendaService.buscarEncomendasRetiradas(pageable);
 
         Assertions.assertTrue(resultado.isEmpty());
+        Assertions.assertEquals(0, resultado.getTotalElements());
     }
 
     @Test

@@ -7,6 +7,8 @@ import com.challenge.encomendas.encomendasum.infrastructure.persistence.mappers.
 import com.challenge.encomendas.encomendasum.infrastructure.persistence.repositories.EncomendaJpaRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -44,12 +46,11 @@ public class EncomendaJpaGateway implements EncomendaGateway {
                 .collect(Collectors.toList());
     }
     @Override
-    public List<Encomenda> findAllByRetiradaTrue() {
-        return encomendaJpaRepository.findByRetiradaTrue()
-                .stream()
-                .map(EncomendaMapper::toDomain)
-                .collect(Collectors.toList());
+    public Page<Encomenda> findAllByRetiradaTrue(Pageable pageable) {
+        return encomendaJpaRepository.findByRetiradaTrue(pageable)
+                .map(EncomendaMapper::toDomain);
     }
+
 
     @Override
     public List<Encomenda> findByMoradorDestinatarioId(Long moradorId) {
